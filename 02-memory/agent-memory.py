@@ -116,6 +116,80 @@ def save_memory(task, result):
     except:
         pass
 
+
+def save_messages_to_file(messages, filename=None):
+    """Save all messages to a JSON file with timestamp"""
+    if filename is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"agent_messages_{timestamp}.json"
+    
+    # Ensure file is saved in the 02-memory directory
+    if not filename.startswith("02-memory/") and not filename.startswith("\\"):
+        filename = os.path.join("02-memory", filename)
+    
+    # Convert messages to serializable format
+    serializable_messages = []
+    for msg in messages:
+        # Handle both dict and ChatCompletionMessage objects
+        if isinstance(msg, dict):
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            tool_call_id = msg.get("tool_call_id")
+        else:
+            # ChatCompletionMessage object
+            role = getattr(msg, "role", "")
+            content = getattr(msg, "content", "")
+            tool_call_id = None
+        
+        serializable_msg = {"role": role, "content": content}
+        
+        if tool_call_id:
+            serializable_msg["tool_call_id"] = tool_call_id
+        
+        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+            serializable_msg["tool_calls"] = []
+            for tool_call in msg.tool_calls:
+                serializable_msg["tool_calls"].append({
+                    "function": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments
+                    }
+                })
+        
+        serializable_messages.append(serializable_msg)
+    
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump({
+                "timestamp": datetime.now().isoformat(),
+                "messages": serializable_messages
+            }, f, indent=2, ensure_ascii=False)
+        return filename
+    except Exception as e:
+        return f"Error saving messages: {str(e)}"
+
+
+def save_plan_data(plan_data, task, filename=None):
+    """Save plan data to a separate JSON file with timestamp"""
+    if filename is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"agent_plan_{timestamp}.json"
+    
+    # Ensure file is saved in the 02-memory directory
+    if not filename.startswith("02-memory/") and not filename.startswith("\\"):
+        filename = os.path.join("02-memory", filename)
+    
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump({
+                "timestamp": datetime.now().isoformat(),
+                "task": task,
+                "plan_data": plan_data
+            }, f, indent=2, ensure_ascii=False)
+        return filename
+    except Exception as e:
+        return f"Error saving plan data: {str(e)}"
+
 def create_plan(task):
     print("[Planning] Breaking down task...")
     response = client.chat.completions.create(
@@ -134,7 +208,11 @@ def create_plan(task):
             steps = plan_data
         else:
             steps = [task]
-        print(f"[Plan] {len(steps)} steps created")
+        
+        # Save plan data to separate file
+        plan_filename = save_plan_data(plan_data, task)
+        print(f"[Plan] {len(steps)} steps created - Plan saved to: {plan_filename}")
+        
         for i, step in enumerate(steps, 1):
             print(f"  {i}. {step}")
         return steps
@@ -192,6 +270,11 @@ def run_agent_plus(task, use_plan=False):
         print(f"\n{result}")
     final_result = "\n".join(all_results)
     save_memory(task, final_result)
+    
+    # Save all messages to JSON file
+    messages_filename = save_messages_to_file(messages)
+    print(f"Messages history saved to: {messages_filename}")
+    
     return final_result
 
 if __name__ == "__main__":
