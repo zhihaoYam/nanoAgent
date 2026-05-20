@@ -1,18 +1,18 @@
 # 从零开始写好 Skill（五）：拆开写，串起用——Skill 的组合之道
 
 > **「从零开始写好 Skill」系列** —— 上一个系列我们用 7 篇文章拆解了 Agent 的骨架，这个系列教你给 Agent 写"工作手册"。
->
+> 
 > - 第一篇：[Skill 是什么？为什么你应该关心它](./skill-01-what-is-skill.md)
 > - 第二篇：[一个好 Skill 长什么样——SKILL.md 的解剖](./skill-02-anatomy.md)
 > - 第三篇：[手把手写你的第一个 Skill](./skill-03-first-skill.md)
 > - 第四篇：[写 Skill 太费劲？让 skill-creator 来帮你](./skill-04-skill-creator.md)
 > - **第五篇：拆开写，串起用——Skill 的组合之道（本文）**
 
----
+-----
 
 ## 开场：一个 Skill 解决一个问题，多个 Skill 解决一整件事
 
-前三篇我们一直在聊"一个 Skill"——怎么理解它、怎么拆解它、怎么从零写一个。
+前四篇我们一直在聊"一个 Skill"——怎么理解它、怎么拆解它、怎么从零写一个、怎么用工具加速迭代。
 
 但真实的工作场景，很少是一个 Skill 就能搞定的。
 
@@ -24,7 +24,7 @@
 
 但问题来了：分开之后，它们怎么配合？
 
----
+-----
 
 ## 一、最简单的配合：接力
 
@@ -53,7 +53,7 @@ wespy-fetcher 输出的是 Markdown 文件。article-summarizer 的操作流程�
 
 这其实和 Unix 的管道哲学是一回事：每个程序做一件事，用文本流串起来。Skill 的世界也一样——每个 Skill 做一件事，用通用格式串起来。
 
----
+-----
 
 ## 二、进阶配合：分工
 
@@ -79,7 +79,7 @@ Agent 可以依次调用三个 Skill，也可以并行调用（部分 Agent 支�
 
 这就是为什么第二篇反复强调"概述要划边界"——不只是为了单个 Skill 的准确性，更是为了多个 Skill 协作时不打架。每个 Skill 在概述里写清楚"我管什么、不管什么"，就是在和其他 Skill 约定协作边界。
 
----
+-----
 
 ## 三、更高级的配合：编排
 
@@ -92,10 +92,10 @@ Agent 可以依次调用三个 Skill，也可以并行调用（部分 Agent 支�
 [wlzh/skills](https://github.com/wlzh/skills) 仓库里有一个真实案例：youtube-to-xiaoyuzhou。它的任务是把 YouTube 视频转成小宇宙播客，整个流程涉及好几步：
 
 1. 调用 **video-downloader** 下载 YouTube 视频/音频
-2. 调用 **audiocut-keyword** 过滤掉音频中的广告关键词
-3. 调用 **voice-changer** 对音频进行变声处理
-4. 调用 **image-generator** 生成封面图
-5. 按照小宇宙的发布要求打包上传
+1. 调用 **audiocut-keyword** 过滤掉音频中的广告关键词
+1. 调用 **voice-changer** 对音频进行变声处理
+1. 调用 **image-generator** 生成封面图
+1. 按照小宇宙的发布要求打包上传
 
 youtube-to-xiaoyuzhou 自己不会下载视频，不会过滤关键词，不会变声——这些活都是其他 Skill 干的。它只负责一件事：**按正确的顺序把这些 Skill 串起来，在它们之间传递参数和文件。**
 
@@ -120,7 +120,7 @@ youtube-to-xiaoyuzhou 自己不会下载视频，不会过滤关键词，不会�
 
 编排 Skill 还有一个好处：**它是一个可以分享的工作流**。你把 youtube-to-xiaoyuzhou 分享给同事，他不需要知道背后有哪些 Skill、怎么串，一条命令就能跑通整个流程。
 
----
+-----
 
 ## 四、反面案例：什么时候不该拆
 
@@ -145,11 +145,11 @@ wespy-fetcher 和 article-summarizer 值得拆成两个 Skill，是因为它们�
 
 一个简单的判断方法：问自己——"这个步骤单独拿出来，有没有人会单独用？"如果答案是"有"，拆；如果答案是"不可能"，留在一起。
 
----
+-----
 
 ## 五、让 Skill 更容易被组合：四条设计原则
 
-基于前面的分析，总结四条让 Skill 之间更容易配合的设计原则。这些原则不是额外的负担——如果你前三篇的内容都读进去了，会发现它们都是自然推导出来的。
+基于前面的分析，总结四条让 Skill 之间更容易配合的设计原则。这些原则不是额外的负担——如果你前几篇的内容都读进去了，会发现它们都是自然推导出来的。
 
 **原则一：单一职责**
 
@@ -174,6 +174,7 @@ wespy-fetcher 和 article-summarizer 值得拆成两个 Skill，是因为它们�
 article-summarizer 里有一句："不负责文章抓取（抓取请使用 wespy-fetcher），只处理已有内容的总结。"
 
 这句话有三重作用：
+
 - 告诉 Agent 不要拿这个 Skill 去做抓取
 - 告诉 Agent 如果需要抓取，去找 wespy-fetcher
 - 告诉其他 Skill 的作者，article-summarizer 的对接点在哪里
@@ -190,7 +191,7 @@ article-summarizer 只要求"一篇 Markdown 格式的文章"。它不关心这�
 
 假设越少，兼容性越强，组合可能性越大。
 
----
+-----
 
 ## 六、从两个 Skill 到 Skill 体系
 
@@ -199,16 +200,19 @@ article-summarizer 只要求"一篇 Markdown 格式的文章"。它不关心这�
 拿 [wlzh/skills](https://github.com/wlzh/skills) 这个仓库举例，里面的 Skill 天然分成了几层：
 
 **采集层：负责从各种来源获取内容**
+
 - wespy-fetcher：公众号文章
 - x-fetcher：Twitter 推文和长文章
 - video-downloader：YouTube 视频
 
 **处理层：负责对内容进行加工**
+
 - article-summarizer：文章总结（我们第三篇写的）
 - voice-changer：音频变声
 - text-to-speech：文字转语音
 
 **输出层：负责把处理结果发布出去**
+
 - youtube-publisher：发布到 YouTube
 - quark-mswnlz-publisher：发布到夸克网盘和资源站
 
@@ -226,11 +230,9 @@ article-summarizer 只要求"一篇 Markdown 格式的文章"。它不关心这�
 
 你的 Skill 库就像一个工具箱：先有几把趁手的工具，用着用着自然知道还缺什么、怎么组合最顺手。不要一开始就试图设计一套完美的工具体系——那样你会花大量时间在设计上，而不是在解决实际问题上。
 
----
+-----
 
-## 七、一张图总结
-
-最后用一张简单的图来概括这篇的核心内容：
+## 七、全篇总结
 
 ```
 单个 Skill 的设计：
@@ -249,7 +251,7 @@ Skill 之间的三种配合方式：
   不拆的标准 = 两个步骤永远绑在一起
 ```
 
----
+-----
 
 ## 下一篇预告
 
@@ -257,6 +259,6 @@ Skill 之间的三种配合方式：
 
 下一篇是收官。我们把 Skill 放回 Agent 的整体架构中，看它和 Rules、Memory、MCP 的关系，回答一个更大的问题：在 Agent 时代，Skill 处于什么位置？
 
----
+-----
 
 *「从零开始写好 Skill」系列是「从零开始理解 Agent」系列的姊妹篇。如果你还没有读过 Agent 系列，建议先从 [第一篇：Agent 的底层原理](./nanoAgent-01-essence.md) 开始。*
